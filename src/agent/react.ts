@@ -130,8 +130,9 @@ ${memoryContent}
     // Add recent chat history (group context)
     const chatHistory = getChatHistory();
     if (chatHistory) {
+      const lineCount = chatHistory.split('\n').filter(l => l.trim()).length;
       prompt += `\n\n<RECENT_CHAT>
-Recent messages in group chat (for context, you can reference what others said):
+История чата (${lineCount} сообщений). ЭТО ВСЁ что у тебя есть - от самых старых к новым:
 ${chatHistory}
 </RECENT_CHAT>`;
     }

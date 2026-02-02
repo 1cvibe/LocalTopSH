@@ -1129,7 +1129,7 @@ export function createBot(config: BotConfig) {
         }
         
         // Save bot response to chat history
-        saveChatMessage('LocalTopSH', finalResponse.slice(0, 150), true);
+        saveChatMessage('LocalTopSH', finalResponse.slice(0, 500), true);
         
         // Periodic troll message
         if (shouldTroll()) {

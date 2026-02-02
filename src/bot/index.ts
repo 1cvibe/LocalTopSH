@@ -893,7 +893,7 @@ export function createBot(config: BotConfig) {
     sessionChats.set(sessionId, chatId);
     
     const username = ctx.from?.username || ctx.from?.first_name || String(userId);
-    console.log(`\n[IN] @${username} (${userId}): ${text.slice(0, 100)}`);
+    console.log(`\n[IN] @${username} (${userId}):\n${text}\n`);
     
     // Log to global activity log
     logGlobal(userId, 'message', text.slice(0, 80));
@@ -987,7 +987,7 @@ export function createBot(config: BotConfig) {
         
         // Send final response with rate limiting
         const finalResponse = response || '(no response)';
-        console.log(`[OUT] → @${username}: ${finalResponse.slice(0, 100)}${finalResponse.length > 100 ? '...' : ''}\n`);
+        console.log(`[OUT] → @${username}:\n${finalResponse}\n`);
         const html = mdToHtml(finalResponse);
         const parts = splitMessage(html);
         

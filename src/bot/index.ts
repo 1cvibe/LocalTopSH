@@ -534,6 +534,10 @@ export function createBot(config: BotConfig) {
   let botUsername = '';
   let botId = 0;
   
+  // AFK mode (bot ignores messages)
+  let afkUntil = 0;
+  let afkReason = '';
+  
   // Initialize LLM for smart reactions
   reactionLLM = new OpenAI({
     baseURL: config.baseUrl,
@@ -1055,10 +1059,65 @@ export function createBot(config: BotConfig) {
     }
   });
   
+  // /afk - bot goes away for a while (admin only)
+  bot.command('afk', async (ctx) => {
+    const userId = ctx.from?.id;
+    // Only allow specific admin (VaKovaLskii)
+    if (userId !== 809532582) {
+      await ctx.reply('Только хозяин может меня отправить по делам 😏');
+      return;
+    }
+    
+    const args = ctx.message?.text?.split(' ').slice(1) || [];
+    const minutes = parseInt(args[0]) || 5;
+    const reason = args.slice(1).join(' ') || 'ушёл по делам';
+    
+    if (minutes <= 0) {
+      // Cancel AFK
+      afkUntil = 0;
+      afkReason = '';
+      await ctx.reply('Я вернулся! 🎉');
+      return;
+    }
+    
+    // Set AFK (max 60 min)
+    const actualMinutes = Math.min(minutes, 60);
+    afkUntil = Date.now() + actualMinutes * 60 * 1000;
+    afkReason = reason;
+    
+    await ctx.reply(`Ладно, ${reason}. Буду через ${actualMinutes} мин ✌️`);
+    saveChatMessage('LocalTopSH', `[AFK] ${reason}, вернусь через ${actualMinutes} мин`, true);
+    
+    // Auto-return message
+    setTimeout(async () => {
+      if (afkUntil > 0 && Date.now() >= afkUntil) {
+        afkUntil = 0;
+        afkReason = '';
+        try {
+          await bot.telegram.sendMessage(ctx.chat.id, 'Вернулся! Что я пропустил? 👀');
+          saveChatMessage('LocalTopSH', 'Вернулся! Что я пропустил? 👀', true);
+        } catch {}
+      }
+    }, actualMinutes * 60 * 1000);
+  });
+  
   // Text messages
   bot.on('text', async (ctx) => {
     const userId = ctx.from?.id;
     if (!userId) return;
+    
+    // Check if bot is AFK
+    if (afkUntil > 0 && Date.now() < afkUntil) {
+      // Still AFK - only react sometimes, don't respond
+      const { respond } = shouldRespond(ctx);
+      if (respond) {
+        // Set a reaction to show we saw the message
+        try {
+          await ctx.telegram.setMessageReaction(ctx.chat.id, ctx.message.message_id, [{ type: 'emoji', emoji: '💤' as any }]);
+        } catch {}
+      }
+      return;
+    }
     
     const { respond, text, isRandom } = shouldRespond(ctx);
     if (!respond || !text) return;

@@ -360,10 +360,11 @@ const toolTrackers = new Map<number, ToolTracker>();
 const TOOL_UPDATE_INTERVAL = 5; // Update every N tools
 const MIN_EDIT_INTERVAL_MS = 3000; // Minimum 3 seconds between edits
 
-// Random reactions for messages
-const POSITIVE_REACTIONS = ['❤️', '🔥', '👍', '🎉', '💯', '⭐', '🤩', '👏'];
-const NEGATIVE_REACTIONS = ['💩', '👎', '🤡', '😴', '🥱', '💀', '🗿'];
-const NEUTRAL_REACTIONS = ['👀', '🤔', '😏', '🙄', '😐'];
+// Random reactions for messages (only Telegram-allowed emojis!)
+// Full list: 👍👎❤️🔥🥰👏😁🤔🤯😱🤬😢🎉🤩🤮💩🙏👌🕊🤡🥱🥴😍🐳❤️‍🔥🌚🌭💯🤣⚡🍌🏆💔🤨😐🍓🍾💋🖕😈😴😭🤓👻👨‍💻👀🎃🙈😇😨🤝✍️🤗🫡🎅🎄☃️💅🤪🗿🆒💘🙉🦄😘💊🙊😎👾🤷‍♂️🤷🤷‍♀️😡
+const POSITIVE_REACTIONS = ['❤️', '🔥', '👍', '🎉', '💯', '🤩', '👏', '😍', '🤗', '🏆'];
+const NEGATIVE_REACTIONS = ['💩', '👎', '🤡', '😴', '🥱', '🗿', '🤮', '💔', '😡'];
+const NEUTRAL_REACTIONS = ['👀', '🤔', '🤨', '😐', '🌚', '👻', '🤷'];
 
 function getRandomReaction(sentiment: 'positive' | 'negative' | 'neutral' | 'random'): string {
   let pool: string[];
@@ -408,8 +409,8 @@ function analyzeSentiment(text: string): 'positive' | 'negative' | 'neutral' {
 
 // Should we react to this message?
 function shouldReact(): boolean {
-  // React to ~25% of messages
-  return Math.random() < 0.25;
+  // React to ~35% of messages
+  return Math.random() < 0.35;
 }
 
 export function createBot(config: BotConfig) {
@@ -662,8 +663,8 @@ export function createBot(config: BotConfig) {
             [{ type: 'emoji', emoji: reaction as any }]
           );
           console.log(`[reaction] ${reaction} to "${msg.text.slice(0, 30)}..." (${sentiment})`);
-        } catch (e) {
-          // Ignore reaction errors
+        } catch (e: any) {
+          console.log(`[reaction] Failed ${reaction}: ${e.message?.slice(0, 50)}`);
         }
       }
     }

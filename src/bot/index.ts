@@ -7,7 +7,7 @@ import { Telegraf, Context } from 'telegraf';
 import { mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { ReActAgent } from '../agent/react.js';
-import { toolNames, setApprovalCallback, setAskCallback, setSendFileCallback, logGlobal, getGlobalLog, shouldTroll, getTrollMessage, saveChatMessage } from '../tools/index.js';
+import { toolNames, setApprovalCallback, setAskCallback, setSendFileCallback, setDeleteMessageCallback, setEditMessageCallback, recordBotMessage, logGlobal, getGlobalLog, shouldTroll, getTrollMessage, saveChatMessage } from '../tools/index.js';
 import { executeCommand } from '../tools/bash.js';
 import { 
   consumePendingCommand, 
@@ -581,6 +581,28 @@ export function createBot(config: BotConfig) {
     });
   });
   
+  // Set up delete message callback
+  setDeleteMessageCallback(async (chatId, messageId) => {
+    try {
+      await bot.telegram.deleteMessage(chatId, messageId);
+      return true;
+    } catch (e: any) {
+      console.log(`[delete] Failed: ${e.message?.slice(0, 50)}`);
+      return false;
+    }
+  });
+  
+  // Set up edit message callback
+  setEditMessageCallback(async (chatId, messageId, newText) => {
+    try {
+      await bot.telegram.editMessageText(chatId, messageId, undefined, newText, { parse_mode: 'HTML' });
+      return true;
+    } catch (e: any) {
+      console.log(`[edit] Failed: ${e.message?.slice(0, 50)}`);
+      return false;
+    }
+  });
+  
   // Handle EXECUTE button - runs the command
   bot.action(/^exec:(.+)$/, async (ctx) => {
     const commandId = ctx.match[1];
@@ -1089,11 +1111,19 @@ export function createBot(config: BotConfig) {
             })
           );
           
+          // Record message for manage_message tool
+          if (sent?.message_id) {
+            recordBotMessage(chatId, sent.message_id);
+          }
+          
           if (!sent && i === 0) {
             // Fallback to plain text
-            await safeSend(chatId, () => 
+            const fallback = await safeSend(chatId, () => 
               ctx.reply(finalResponse.slice(0, 4000), { reply_parameters: { message_id: messageId } })
             );
+            if (fallback?.message_id) {
+              recordBotMessage(chatId, fallback.message_id);
+            }
             break;
           }
         }
@@ -1105,7 +1135,8 @@ export function createBot(config: BotConfig) {
         if (shouldTroll()) {
           await new Promise(r => setTimeout(r, 2000));  // Wait a bit
           const trollMsg = getTrollMessage();
-          await safeSend(chatId, () => ctx.reply(trollMsg));
+          const trollSent = await safeSend(chatId, () => ctx.reply(trollMsg));
+          if (trollSent?.message_id) recordBotMessage(chatId, trollSent.message_id);
           saveChatMessage('LocalTopSH', trollMsg, true);
         }
       } catch (e: any) {

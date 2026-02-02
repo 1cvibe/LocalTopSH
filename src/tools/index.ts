@@ -25,11 +25,13 @@ import * as tasks from './tasks.js';
 import * as ask from './ask.js';
 import * as memory from './memory.js';
 import * as sendFile from './sendFile.js';
+import * as message from './message.js';
 
 // Re-export callback setters
 export { setApprovalCallback } from './bash.js';
 export { setAskCallback } from './ask.js';
 export { setSendFileCallback } from './sendFile.js';
+export { setDeleteMessageCallback, setEditMessageCallback, recordBotMessage } from './message.js';
 export { getMemoryForPrompt, logGlobal, getGlobalLog, shouldTroll, getTrollMessage, saveChatMessage, getChatHistory } from './memory.js';
 export { getChatHistory as getChatHistoryForPrompt } from './memory.js';
 
@@ -49,6 +51,7 @@ export const definitions = [
   ask.definition,
   memory.definition,
   sendFile.definition,
+  message.definition,
 ];
 
 // Tool names
@@ -148,6 +151,10 @@ export async function execute(
     
     case 'send_file':
       result = await sendFile.execute(args as any, ctx.cwd, ctx.chatId || 0);
+      break;
+    
+    case 'manage_message':
+      result = await message.execute(args as any, ctx.chatId || 0);
       break;
     
     default:

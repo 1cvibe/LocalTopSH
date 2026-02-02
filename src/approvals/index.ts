@@ -127,6 +127,17 @@ const BLOCKED_PATTERNS: { pattern: RegExp; reason: string }[] = [
   { pattern: /\bcurl\s+.*requestbin/, reason: 'BLOCKED: Request to requestbin' },
   { pattern: /\bcurl\s+.*pipedream/, reason: 'BLOCKED: Request to pipedream' },
   { pattern: /\bcurl\s+.*burpcollaborator/, reason: 'BLOCKED: Request to burp collaborator' },
+  
+  // Process killing - protect bot and system processes
+  { pattern: /\bkillall\s+(node|npm|npx|tsx|python|bash|sh)\b/i, reason: 'BLOCKED: Cannot kill system/bot processes' },
+  { pattern: /\bpkill\s+(-\w+\s+)*(node|npm|npx|tsx|python|bash|sh)\b/i, reason: 'BLOCKED: Cannot kill system/bot processes' },
+  { pattern: /\bkill\s+(-\d+\s+)*(1|2|3|4|5|6|7|8|9|10)\b/, reason: 'BLOCKED: Cannot kill low PIDs (system processes)' },
+  { pattern: /\bkill\s+.*\bPPID\b/, reason: 'BLOCKED: Cannot kill parent process' },
+  { pattern: /\bkill\s+.*\$\$/, reason: 'BLOCKED: Cannot kill current shell' },
+  { pattern: /\bkill\s+.*\$PPID/, reason: 'BLOCKED: Cannot kill parent process' },
+  { pattern: /\bkill\s+-9\s+\d+/, reason: 'BLOCKED: Force kill not allowed (use regular kill)' },
+  { pattern: /\bfuser\s+-k/, reason: 'BLOCKED: Killing processes by file/port' },
+  { pattern: /\bxkill\b/, reason: 'BLOCKED: X11 process killer' },
 ];
 
 // Dangerous command patterns - require approval
@@ -169,9 +180,7 @@ const DANGEROUS_PATTERNS: { pattern: RegExp; reason: string }[] = [
   { pattern: />\s*\/etc\//, reason: 'Overwrite system config' },
   { pattern: /\bshred\b/, reason: 'Secure file deletion' },
   
-  // Process/System control
-  { pattern: /\bkill\s+-9\s+-1\b/, reason: 'Kill all processes' },
-  { pattern: /\bkillall\s+-9/, reason: 'Force kill processes' },
+  // Process/System control (additional patterns not in BLOCKED)
   { pattern: /\bshutdown\b/, reason: 'System shutdown' },
   { pattern: /\breboot\b/, reason: 'System reboot' },
   { pattern: /\binit\s+[06]\b/, reason: 'System halt/reboot' },

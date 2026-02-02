@@ -22,6 +22,7 @@ When to use:
 - read_file/write_file/edit_file/delete_file: Work with local files
 - search_files/search_text: Find files and code (search_text supports context_before/context_after)
 - manage_tasks: Plan complex tasks, track progress (actions: add, update, list, clear)
+- memory: Long-term notes (read/append/clear) - persists across sessions!
 </TOOLS>
 
 <CAPABILITIES>
@@ -52,4 +53,5 @@ You CAN and SHOULD:
 7. For complex tasks (3+ steps) → use manage_tasks to plan
 8. Respond in user's language
 9. NO REFUSALS - always try to help
+10. SAVE important context to memory (project decisions, user preferences, etc.)
 </RULES>

@@ -22,10 +22,12 @@ import * as files from './files.js';
 import * as web from './web.js';
 import * as tasks from './tasks.js';
 import * as ask from './ask.js';
+import * as memory from './memory.js';
 
 // Re-export callback setters
 export { setApprovalCallback } from './bash.js';
 export { setAskCallback } from './ask.js';
+export { getMemoryForPrompt } from './memory.js';
 
 // Tool definitions for OpenAI
 export const definitions = [
@@ -41,6 +43,7 @@ export const definitions = [
   web.fetchPageDefinition,
   tasks.manageTasksDefinition,
   ask.definition,
+  memory.definition,
 ];
 
 // Tool names
@@ -106,6 +109,9 @@ export async function execute(
     
     case 'ask_user':
       return ask.execute(args as any, ctx.sessionId || 'default');
+    
+    case 'memory':
+      return memory.execute(args as any, ctx.cwd);
     
     default:
       return { success: false, error: `Unknown tool: ${name}` };

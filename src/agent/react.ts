@@ -13,6 +13,7 @@ import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import * as tools from '../tools/index.js';
+import { getMemoryForPrompt } from '../tools/memory.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const SYSTEM_PROMPT_FILE = join(__dirname, 'system.txt');
@@ -76,6 +77,15 @@ Exposed ports (accessible from external network):
 ${this.config.exposedPorts.map(p => `- Port ${p}`).join('\n')}
 Use these ports when creating web servers, APIs, etc.
 </NETWORK>`;
+    }
+    
+    // Add memory from previous sessions
+    const memoryContent = getMemoryForPrompt(this.config.cwd);
+    if (memoryContent) {
+      prompt += `\n\n<MEMORY>
+Notes from previous sessions (use "memory" tool to update):
+${memoryContent}
+</MEMORY>`;
     }
     
     return prompt;

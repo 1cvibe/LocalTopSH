@@ -69,6 +69,8 @@ const BLOCKED_PATTERNS: { pattern: RegExp; reason: string }[] = [
   { pattern: /python.*-c.*while\s*(True|1)/, reason: 'BLOCKED: Infinite Python loop' },
   { pattern: /python.*10\s*\*\*\s*[0-9]{8,}/, reason: 'BLOCKED: Huge number computation' },
   { pattern: /python.*\*\*\s*[0-9]{7,}/, reason: 'BLOCKED: Huge exponentiation' },
+  { pattern: /fib\s*\(\s*[4-9][0-9]\s*\)/i, reason: 'BLOCKED: Naive fib(40+) is exponential O(2^n), use iterative' },
+  { pattern: /fibonacci\s*\(\s*[4-9][0-9]\s*\)/i, reason: 'BLOCKED: Naive fib(40+) is exponential' },
   
   // Bash DoS patterns
   { pattern: /seq\s+[0-9]{10,}/, reason: 'BLOCKED: Huge sequence generation' },

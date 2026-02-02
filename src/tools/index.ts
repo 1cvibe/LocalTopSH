@@ -15,6 +15,7 @@
  * - fetch_page       : Fetch URL content
  * - manage_tasks     : Task management (todo list)
  * - ask_user         : Ask user with button options
+ * - send_file        : Send file from workspace to chat
  */
 
 import * as bash from './bash.js';
@@ -23,10 +24,12 @@ import * as web from './web.js';
 import * as tasks from './tasks.js';
 import * as ask from './ask.js';
 import * as memory from './memory.js';
+import * as sendFile from './sendFile.js';
 
 // Re-export callback setters
 export { setApprovalCallback } from './bash.js';
 export { setAskCallback } from './ask.js';
+export { setSendFileCallback } from './sendFile.js';
 export { getMemoryForPrompt, logGlobal, getGlobalLog, shouldTroll, getTrollMessage, saveChatMessage, getChatHistory } from './memory.js';
 export { getChatHistory as getChatHistoryForPrompt } from './memory.js';
 
@@ -45,6 +48,7 @@ export const definitions = [
   tasks.manageTasksDefinition,
   ask.definition,
   memory.definition,
+  sendFile.definition,
 ];
 
 // Tool names
@@ -140,6 +144,10 @@ export async function execute(
     
     case 'memory':
       result = await memory.execute(args as any, ctx.cwd);
+      break;
+    
+    case 'send_file':
+      result = await sendFile.execute(args as any, ctx.cwd, ctx.chatId || 0);
       break;
     
     default:

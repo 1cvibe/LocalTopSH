@@ -7,7 +7,7 @@ import { Telegraf, Context } from 'telegraf';
 import { mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { ReActAgent } from '../agent/react.js';
-import { toolNames, setApprovalCallback, setAskCallback, logGlobal, getGlobalLog, shouldTroll, getTrollMessage, saveChatMessage } from '../tools/index.js';
+import { toolNames, setApprovalCallback, setAskCallback, setSendFileCallback, logGlobal, getGlobalLog, shouldTroll, getTrollMessage, saveChatMessage } from '../tools/index.js';
 import { executeCommand } from '../tools/bash.js';
 import { 
   consumePendingCommand, 
@@ -568,6 +568,17 @@ export function createBot(config: BotConfig) {
     });
     
     return promise;
+  });
+  
+  // Set up send file callback
+  setSendFileCallback(async (chatId, filePath, caption) => {
+    const { createReadStream } = await import('fs');
+    await bot.telegram.sendDocument(chatId, {
+      source: createReadStream(filePath),
+      filename: filePath.split('/').pop() || 'file',
+    }, {
+      caption: caption || undefined,
+    });
   });
   
   // Handle EXECUTE button - runs the command

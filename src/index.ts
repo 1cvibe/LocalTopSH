@@ -28,6 +28,7 @@ const config = {
   apiKey: process.env.API_KEY!,
   model: process.env.MODEL_NAME!,
   telegramToken: process.env.TELEGRAM_TOKEN!,
+  zaiApiKey: process.env.ZAI_API_KEY,
   tavilyApiKey: process.env.TAVILY_API_KEY,
   cwd: process.env.AGENT_CWD || process.cwd(),
   gatewayPort: parseInt(process.env.GATEWAY_PORT || '3100'),
@@ -40,6 +41,7 @@ if (mode === 'gateway') {
   const gateway = createGateway({
     port: config.gatewayPort,
     cwd: config.cwd,
+    zaiApiKey: config.zaiApiKey,
     tavilyApiKey: config.tavilyApiKey,
   });
   gateway.start();
@@ -47,6 +49,7 @@ if (mode === 'gateway') {
   console.log('Starting Agent...');
   console.log(`CWD: ${config.cwd}`);
   console.log(`Model: ${config.model}`);
+  console.log(`Search: ${config.zaiApiKey ? 'Z.AI' : config.tavilyApiKey ? 'Tavily' : 'none'}`);
   console.log(`Allowed: ${allowedUsers.length ? allowedUsers.join(', ') : 'all'}`);
   
   const bot = createBot(config);

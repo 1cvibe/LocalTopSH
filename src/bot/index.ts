@@ -13,6 +13,7 @@ export interface BotConfig {
   apiKey: string;
   model: string;
   cwd: string;
+  zaiApiKey?: string;
   tavilyApiKey?: string;
   allowedUsers?: number[];
 }
@@ -110,6 +111,7 @@ export function createBot(config: BotConfig) {
     apiKey: config.apiKey,
     model: config.model,
     cwd: config.cwd,
+    zaiApiKey: config.zaiApiKey,
     tavilyApiKey: config.tavilyApiKey,
   });
   

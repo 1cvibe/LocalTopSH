@@ -8,6 +8,7 @@ import * as tools from '../tools/index.js';
 export interface GatewayConfig {
   port: number;
   cwd: string;
+  zaiApiKey?: string;
   tavilyApiKey?: string;
 }
 
@@ -50,6 +51,7 @@ export function createGateway(config: GatewayConfig) {
           
           const result = await tools.execute(tool, args || {}, {
             cwd: config.cwd,
+            zaiApiKey: config.zaiApiKey,
             tavilyApiKey: config.tavilyApiKey,
           });
           
@@ -71,9 +73,9 @@ export function createGateway(config: GatewayConfig) {
   return {
     start: () => {
       server.listen(config.port, '0.0.0.0', () => {
-        console.log(`🔧 Gateway on http://0.0.0.0:${config.port}`);
-        console.log(`📁 CWD: ${config.cwd}`);
-        console.log(`🛠️  Tools: ${tools.toolNames.join(', ')}`);
+        console.log(`Gateway on http://0.0.0.0:${config.port}`);
+        console.log(`CWD: ${config.cwd}`);
+        console.log(`Tools: ${tools.toolNames.join(', ')}`);
       });
     },
     stop: () => server.close(),

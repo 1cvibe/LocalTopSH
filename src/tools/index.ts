@@ -1,6 +1,6 @@
 /**
  * Tools Registry
- * Pattern: Action + Object (+ Qualifier)
+ * Pattern: Action + Object
  * 
  * Core tools:
  * - run_command      : Execute shell commands
@@ -10,7 +10,7 @@
  * - search_files     : Find files by glob pattern
  * - search_text      : Search text in files (grep)
  * - list_directory   : List directory contents
- * - search_web       : Search the internet
+ * - search_web       : Search the internet (Z.AI + Tavily)
  * - fetch_page       : Fetch URL content
  */
 
@@ -44,6 +44,7 @@ export interface ToolResult {
 // Context
 export interface ToolContext {
   cwd: string;
+  zaiApiKey?: string;
   tavilyApiKey?: string;
 }
 
@@ -78,7 +79,7 @@ export async function execute(
       return files.executeListDirectory(args as any, ctx.cwd);
     
     case 'search_web':
-      return web.executeSearchWeb(args as any, ctx.tavilyApiKey);
+      return web.executeSearchWeb(args as any, ctx.zaiApiKey, ctx.tavilyApiKey);
     
     case 'fetch_page':
       return web.executeFetchPage(args as any);

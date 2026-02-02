@@ -18,6 +18,7 @@ export interface AgentConfig {
   apiKey: string;
   model: string;
   cwd: string;
+  zaiApiKey?: string;
   tavilyApiKey?: string;
   maxIterations?: number;
   maxHistory?: number;
@@ -182,6 +183,7 @@ ${toSummarize.map(m =>
           // Observe: Get tool result
           const result = await tools.execute(name, args, {
             cwd: this.config.cwd,
+            zaiApiKey: this.config.zaiApiKey,
             tavilyApiKey: this.config.tavilyApiKey,
           });
           

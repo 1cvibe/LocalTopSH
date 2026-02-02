@@ -22,44 +22,71 @@ interface PendingQuestion {
 }
 const pendingQuestions = new Map<string, PendingQuestion>();
 
-// Rate limiter - track last message time per chat
-const lastMessageTime = new Map<number, number>();
-const MIN_MESSAGE_INTERVAL = 1000; // 1 second between messages
+// Global rate limiter - single queue for ALL telegram messages
+let globalLastSend = 0;
+const GLOBAL_MIN_INTERVAL = 100; // 100ms between any messages (10/sec max)
+const GROUP_MIN_INTERVAL = 3000; // 3 seconds for groups
+const lastGroupMessage = new Map<number, number>();
 
-// Safe send with rate limiting and retry
+// Global mutex for sending
+let sendMutex = Promise.resolve();
+
+// Safe send with global rate limiting
 async function safeSend<T>(
   chatId: number,
   fn: () => Promise<T>,
-  maxRetries = 3
+  maxRetries = 2
 ): Promise<T | null> {
-  // Rate limit check
-  const now = Date.now();
-  const lastTime = lastMessageTime.get(chatId) || 0;
-  const wait = MIN_MESSAGE_INTERVAL - (now - lastTime);
-  if (wait > 0) {
-    await new Promise(r => setTimeout(r, wait));
-  }
-  lastMessageTime.set(chatId, Date.now());
+  // Use mutex to serialize all sends
+  const myTurn = sendMutex;
+  let release: () => void;
+  sendMutex = new Promise(r => { release = r; });
   
-  // Retry logic
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (e: any) {
-      if (e.response?.error_code === 429) {
-        const retryAfter = e.response?.parameters?.retry_after || 10;
-        console.log(`[rate-limit] 429 error, waiting ${retryAfter}s (attempt ${attempt}/${maxRetries})`);
-        if (attempt < maxRetries) {
-          await new Promise(r => setTimeout(r, retryAfter * 1000));
+  await myTurn;
+  
+  try {
+    // Global rate limit
+    const now = Date.now();
+    const globalWait = GLOBAL_MIN_INTERVAL - (now - globalLastSend);
+    if (globalWait > 0) {
+      await new Promise(r => setTimeout(r, globalWait));
+    }
+    
+    // Extra delay for groups (negative chat IDs)
+    if (chatId < 0) {
+      const lastGroup = lastGroupMessage.get(chatId) || 0;
+      const groupWait = GROUP_MIN_INTERVAL - (Date.now() - lastGroup);
+      if (groupWait > 0) {
+        await new Promise(r => setTimeout(r, groupWait));
+      }
+      lastGroupMessage.set(chatId, Date.now());
+    }
+    
+    globalLastSend = Date.now();
+    
+    // Retry logic
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        return await fn();
+      } catch (e: any) {
+        if (e.response?.error_code === 429) {
+          const retryAfter = (e.response?.parameters?.retry_after || 30) + 5; // Add buffer
+          console.log(`[rate-limit] 429, waiting ${retryAfter}s (${attempt}/${maxRetries})`);
+          if (attempt < maxRetries) {
+            await new Promise(r => setTimeout(r, retryAfter * 1000));
+            globalLastSend = Date.now(); // Reset after wait
+          }
+        } else {
+          console.error(`[send] Error: ${e.message?.slice(0, 100)}`);
+          return null;
         }
-      } else {
-        console.error(`[send] Error: ${e.message}`);
-        return null;
       }
     }
+    console.error(`[send] Failed for chat ${chatId}`);
+    return null;
+  } finally {
+    release!();
   }
-  console.error(`[send] Max retries exceeded for chat ${chatId}`);
-  return null;
 }
 
 // Per-user rate limiter (max 1 concurrent request)

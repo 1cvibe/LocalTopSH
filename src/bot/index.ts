@@ -245,7 +245,8 @@ export function createBot(config: BotConfig) {
   
   // Set up scheduler callback for sending messages
   setSendMessageCallback(async (chatId, text) => {
-    await bot.telegram.sendMessage(chatId, text);
+    const html = mdToHtml(text);
+    await bot.telegram.sendMessage(chatId, html, { parse_mode: 'HTML' });
   });
   
   // Start the task scheduler
@@ -591,9 +592,22 @@ export function createBot(config: BotConfig) {
           }
           
           if (!sent && i === 0) {
-            // Fallback to plain text
+            // HTML parsing failed - fallback to plain text
+            console.log(`[send] FALLBACK triggered! HTML failed, sending as plain text`);
+            console.log(`[send] Failed HTML (first 500): ${parts[i].slice(0, 500).replace(/\n/g, '\\n')}`);
+            
+            // Strip HTML tags for plain text fallback
+            const plainText = parts[i]
+              .replace(/<pre><code[^>]*>([\s\S]*?)<\/code><\/pre>/g, '```\n$1\n```')
+              .replace(/<code>(.*?)<\/code>/g, '`$1`')
+              .replace(/<\/?[^>]+>/g, '')  // Remove remaining HTML tags
+              .replace(/&lt;/g, '<')
+              .replace(/&gt;/g, '>')
+              .replace(/&amp;/g, '&')
+              .slice(0, 4000);
+            
             const fallback = await safeSend(chatId, () => 
-              ctx.reply(finalResponse.slice(0, 4000), { reply_parameters: { message_id: messageId } })
+              ctx.reply(plainText, { reply_parameters: { message_id: messageId } })
             );
             if (fallback?.message_id) {
               recordBotMessage(chatId, fallback.message_id);

@@ -41,9 +41,11 @@ export const CONFIG = {
 
   // ============== AGENT BEHAVIOR ==============
   agent: {
-    maxIterations: 15,            // max think-act cycles per request
+    maxIterations: 30,            // max think-act cycles per request
     maxHistory: 10,               // conversation pairs to keep
     maxBlockedCommands: 3,        // stop after N blocked commands
+    maxToolOutput: 8000,          // max chars per tool output (trim if larger)
+    maxContextMessages: 40,       // max messages in working context (trim oldest)
   },
 
   // ============== BOT RESPONSES ==============

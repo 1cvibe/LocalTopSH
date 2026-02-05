@@ -189,6 +189,7 @@ ${chatHistory}
     let iteration = 0;
     let finalResponse = '';
     let blockedCount = 0;  // Track consecutive BLOCKED errors
+    let totalTokens = { prompt: 0, completion: 0, total: 0 };
     
     // ReAct loop: Think → Act → Observe
     while (iteration < this.config.maxIterations!) {
@@ -198,10 +199,7 @@ ${chatHistory}
         // Build full message list
         const messages = this.buildMessages(session, userMessage, workingMessages);
         
-        // Minimal logging
-        if (iteration === 1) {
-          console.log(`[agent] Turn ${iteration}...`);
-        }
+        console.log(`[agent] Step ${iteration}/${this.config.maxIterations} (ctx: ${workingMessages.length} msgs)`);
         
         // Think: LLM decides what to do
         // Get all tools including dynamic ones (like gdrive based on user status)
@@ -213,6 +211,14 @@ ${chatHistory}
           tools: allTools as any[],
           tool_choice: 'auto',
         });
+        
+        // Track token usage
+        if (response.usage) {
+          totalTokens.prompt += response.usage.prompt_tokens || 0;
+          totalTokens.completion += response.usage.completion_tokens || 0;
+          totalTokens.total += response.usage.total_tokens || 0;
+          console.log(`[agent] Tokens: +${response.usage.total_tokens} (prompt: ${response.usage.prompt_tokens}, completion: ${response.usage.completion_tokens}) | Total: ${totalTokens.total}`);
+        }
         
         const rawMessage = response.choices[0].message;
         
@@ -243,6 +249,9 @@ ${chatHistory}
         workingMessages.push(message);
         
         // Act: Execute tools
+        const toolNames = (message.tool_calls || []).map(c => c.function.name).join(', ');
+        console.log(`[agent] Tools: ${toolNames}`);
+        
         let hasBlocked = false;
         for (const call of message.tool_calls || []) {
           const name = call.function.name;
@@ -284,6 +293,15 @@ ${chatHistory}
             ? (result.output || 'Success') 
             : `Error: ${result.error}`;
           
+          // Trim large outputs to prevent context overflow
+          const maxOut = CONFIG.agent.maxToolOutput || 8000;
+          if (output.length > maxOut) {
+            const head = output.slice(0, maxOut * 0.6);
+            const tail = output.slice(-maxOut * 0.3);
+            output = `${head}\n\n... [TRIMMED ${output.length - head.length - tail.length} chars] ...\n\n${tail}`;
+            console.log(`[agent] Trimmed output: ${output.length} -> ${head.length + tail.length + 50} chars`);
+          }
+          
           // Track BLOCKED commands to prevent loops
           if (output.includes('BLOCKED:')) {
             hasBlocked = true;
@@ -297,6 +315,20 @@ ${chatHistory}
             tool_call_id: call.id,
             content: output,
           });
+        }
+        
+        // Context windowing: trim old messages if too many
+        const maxCtx = CONFIG.agent.maxContextMessages || 40;
+        if (workingMessages.length > maxCtx) {
+          // Keep system (0) + first user (1) + last N messages
+          const keep = maxCtx - 2;
+          const trimmed = workingMessages.length - keep - 2;
+          workingMessages = [
+            workingMessages[0],  // system
+            workingMessages[1],  // first user message
+            ...workingMessages.slice(-keep)
+          ];
+          console.log(`[agent] Context trimmed: removed ${trimmed} old messages, keeping ${workingMessages.length}`);
         }
         
         // Stop if too many BLOCKED commands (prevent loops)
@@ -320,6 +352,9 @@ ${chatHistory}
     if (!finalResponse) {
       finalResponse = '⚠️ Max iterations reached';
     }
+    
+    // Final stats
+    console.log(`[agent] Done: ${iteration} steps, ${totalTokens.total} tokens (prompt: ${totalTokens.prompt}, completion: ${totalTokens.completion})`);
     
     // Save to history (clean: just user message + final response)
     session.history.push({

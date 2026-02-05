@@ -89,19 +89,91 @@
 ## Quick Start
 
 ```bash
-# 1. Create secrets
+# 1. Create secrets folder
 mkdir secrets
+
+# 2. Add required secrets
 echo "your-telegram-token" > secrets/telegram_token.txt
 echo "http://your-llm:8000/v1" > secrets/base_url.txt
 echo "your-llm-key" > secrets/api_key.txt
 echo "your-zai-key" > secrets/zai_api_key.txt
 
-# 2. Start
+# 3. Start
 docker compose up -d
 
-# 3. Check
+# 4. Check
 docker compose logs -f
 ```
+
+## Secrets Configuration
+
+All secrets are stored in `secrets/` folder (gitignored) and mounted via Docker Secrets.
+
+| Secret File | Required | Description |
+|-------------|----------|-------------|
+| `telegram_token.txt` | ✅ Yes | Telegram Bot API token from [@BotFather](https://t.me/BotFather) |
+| `base_url.txt` | ✅ Yes | LLM API endpoint (e.g., `http://your-llm:8000/v1`) |
+| `api_key.txt` | ✅ Yes | LLM API key |
+| `zai_api_key.txt` | ✅ Yes | Z.AI API key for web search ([z.ai](https://z.ai)) |
+| `gdrive_client_id.txt` | ❌ Optional | Google Drive OAuth Client ID |
+| `gdrive_client_secret.txt` | ❌ Optional | Google Drive OAuth Client Secret |
+
+**Security:** Secrets are only accessible by the Proxy container. The Agent (Gateway) never sees API keys — it routes requests through the internal Proxy.
+
+## Google Drive Integration
+
+Users can connect their Google Drive to access files directly from the bot.
+
+### Setup Google Drive (Optional)
+
+1. **Create Google Cloud Project**
+   - Go to [Google Cloud Console](https://console.cloud.google.com/)
+   - Create new project or select existing
+   - Enable **Google Drive API**
+
+2. **Create OAuth 2.0 Credentials**
+   - Go to **APIs & Services → Credentials**
+   - Click **Create Credentials → OAuth client ID**
+   - Application type: **Desktop app**
+   - Download JSON or copy Client ID and Client Secret
+
+3. **Configure OAuth Consent Screen**
+   - Go to **APIs & Services → OAuth consent screen**
+   - User type: **External** (or Internal for Workspace)
+   - Add scopes: `https://www.googleapis.com/auth/drive.readonly`
+   - Add test users (if in testing mode)
+
+4. **Add Secrets**
+   ```bash
+   echo "your-client-id.apps.googleusercontent.com" > secrets/gdrive_client_id.txt
+   echo "your-client-secret" > secrets/gdrive_client_secret.txt
+   ```
+
+5. **Restart**
+   ```bash
+   docker compose down && docker compose up -d
+   ```
+
+### User Flow
+
+1. User sends `/gdrive` or asks to connect Google Drive
+2. Bot returns OAuth URL
+3. User opens URL, grants access, gets redirect with code
+4. User sends code to bot
+5. Bot exchanges code for tokens, stores in user's workspace
+6. User can now: list files, search, download from their Drive
+
+### Google Drive Tools
+
+| Tool | Description |
+|------|-------------|
+| `gdrive_auth` | Start OAuth flow, get auth URL |
+| `gdrive_callback` | Exchange auth code for tokens |
+| `gdrive_list` | List files in Drive or folder |
+| `gdrive_search` | Search files by name |
+| `gdrive_download` | Download file to workspace |
+
+**Per-user tokens:** Each user's OAuth tokens are stored in their isolated workspace (`/workspace/{userId}/gdrive_token.json`). Users only access their own Drive.
 
 ## Configuration
 

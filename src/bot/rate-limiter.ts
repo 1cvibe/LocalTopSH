@@ -57,7 +57,14 @@ export async function safeSend<T>(
             globalLastSend = Date.now(); // Reset after wait
           }
         } else {
-          console.error(`[send] Error: ${e.message?.slice(0, 100)}`);
+          // Log full error for HTML parse failures
+          const errMsg = e.message || String(e);
+          const errCode = e.response?.error_code;
+          const errDesc = e.response?.description;
+          console.error(`[send] Error code=${errCode}: ${errDesc || errMsg}`);
+          if (errDesc?.includes('parse')) {
+            console.error(`[send] HTML PARSE ERROR - full message: ${errMsg.slice(0, 500)}`);
+          }
           return null;
         }
       }

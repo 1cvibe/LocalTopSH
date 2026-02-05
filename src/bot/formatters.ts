@@ -37,12 +37,21 @@ export function convertTable(tableText: string): string {
 
 // Markdown → Telegram HTML
 export function mdToHtml(text: string): string {
+  console.log(`[fmt] INPUT (${text.length} chars): ${text.slice(0, 200).replace(/\n/g, '\\n')}...`);
+  
+  // Use \x00 (null byte) as delimiter - won't match any markdown patterns
   const codeBlocks: string[] = [];
   let result = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
     const idx = codeBlocks.length;
-    codeBlocks.push(`<pre>${escapeHtml(code.trim())}</pre>`);
-    return `__CODE_BLOCK_${idx}__`;
+    // Telegram requires <pre><code class="language-X"> for syntax highlighting
+    const langAttr = lang ? ` class="language-${lang}"` : '';
+    const block = `<pre><code${langAttr}>${escapeHtml(code.trim())}</code></pre>`;
+    console.log(`[fmt] CODE_BLOCK[${idx}] lang=${lang || 'none'}, len=${code.length}`);
+    codeBlocks.push(block);
+    return `\x00CODEBLOCK${idx}\x00`;
   });
+  
+  console.log(`[fmt] Found ${codeBlocks.length} code blocks`);
   
   result = result.replace(/(?:^\|.+\|$\n?)+/gm, (table) => {
     return convertTable(table);
@@ -52,8 +61,10 @@ export function mdToHtml(text: string): string {
   result = result.replace(/`([^`]+)`/g, (_, code) => {
     const idx = inlineCode.length;
     inlineCode.push(`<code>${escapeHtml(code)}</code>`);
-    return `__INLINE_CODE_${idx}__`;
+    return `\x00INLINECODE${idx}\x00`;
   });
+  
+  console.log(`[fmt] Found ${inlineCode.length} inline codes`);
   
   // Protect @mentions from formatting (before escapeHtml)
   const mentions: string[] = [];
@@ -84,19 +95,22 @@ export function mdToHtml(text: string): string {
   
   result = escapeHtml(result);
   
-  codeBlocks.forEach((block, i) => {
-    result = result.replace(`__CODE_BLOCK_${i}__`, block);
-  });
-  inlineCode.forEach((code, i) => {
-    result = result.replace(`__INLINE_CODE_${i}__`, code);
-  });
-  
+  // Apply markdown formatting BEFORE restoring code blocks
+  // (so __ and _ in code don't get converted to <b>/<i>)
   result = result
     .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
     .replace(/\*(.+?)\*/g, '<i>$1</i>')
     .replace(/__(.+?)__/g, '<b>$1</b>')
     .replace(/_(.+?)_/g, '<i>$1</i>')
     .replace(/~~(.+?)~~/g, '<s>$1</s>');
+  
+  // Now restore code blocks (they won't be affected by markdown formatting)
+  codeBlocks.forEach((block, i) => {
+    result = result.replace(`\x00CODEBLOCK${i}\x00`, block);
+  });
+  inlineCode.forEach((code, i) => {
+    result = result.replace(`\x00INLINECODE${i}\x00`, code);
+  });
   
   // Restore @mentions after formatting
   mentions.forEach((mention, i) => {
@@ -112,6 +126,19 @@ export function mdToHtml(text: string): string {
   ids.forEach((id, i) => {
     result = result.replace(`\x00ID${i}\x00`, id);
   });
+  
+  // Final cleanup - remove any leftover placeholders (safety net)
+  const leftoverBlocks = (result.match(/\x00CODEBLOCK\d+\x00/g) || []).length;
+  const leftoverInline = (result.match(/\x00INLINECODE\d+\x00/g) || []).length;
+  if (leftoverBlocks || leftoverInline) {
+    console.log(`[fmt] WARNING: Leftover placeholders! blocks=${leftoverBlocks}, inline=${leftoverInline}`);
+  }
+  
+  result = result
+    .replace(/\x00CODEBLOCK\d+\x00/g, '[code]')
+    .replace(/\x00INLINECODE\d+\x00/g, '');
+  
+  console.log(`[fmt] OUTPUT (${result.length} chars): ${result.slice(0, 300).replace(/\n/g, '\\n')}...`);
   
   return result;
 }

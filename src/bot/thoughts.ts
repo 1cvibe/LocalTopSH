@@ -101,14 +101,17 @@ ${chatHistory}
     
     const thought = response.choices[0]?.message?.content?.trim();
     
+    console.log(`[thought] LLM raw response: "${thought?.slice(0, 100)}"`);
+    
     if (!thought || thought.length < 3 || thought.length > 300) {
-      console.log('[thought] Invalid response from LLM, skipping');
+      console.log(`[thought] Invalid response (len=${thought?.length}), skipping`);
       return null;
     }
     
+    console.log(`[thought] Generated via LLM: ${thought.slice(0, 50)}...`);
     return thought;
   } catch (e: any) {
-    console.log(`[thought] LLM error: ${e.message?.slice(0, 50)}`);
+    console.log(`[thought] LLM error: ${e.message?.slice(0, 100)}`);
     return null;
   }
 }

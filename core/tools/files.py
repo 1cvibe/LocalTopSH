@@ -15,6 +15,10 @@ from models import ToolResult, ToolContext
 
 def normalize_path(input_path: str, cwd: str) -> str:
     """Normalize path to user's workspace"""
+    # Handle "workspace/..." -> "/workspace/..."
+    if input_path.startswith("workspace/"):
+        input_path = "/" + input_path
+    
     if not input_path.startswith("/"):
         return os.path.join(cwd, input_path)
     

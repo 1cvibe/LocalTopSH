@@ -4,16 +4,16 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import asyncio
 import aiohttp
 from config import CONFIG
 from logger import tool_logger
 from models import ToolResult, ToolContext
+from tools.files import normalize_path
 
 
 async def tool_send_file(args: dict, ctx: ToolContext) -> ToolResult:
     """Send file from workspace to chat"""
-    import asyncio
-    
     path = args.get("path", "")
     caption = args.get("caption", "")
     
@@ -21,8 +21,7 @@ async def tool_send_file(args: dict, ctx: ToolContext) -> ToolResult:
         return ToolResult(False, error="Path required")
     
     # Normalize path
-    if not path.startswith("/"):
-        path = os.path.join(ctx.cwd, path)
+    path = normalize_path(path, ctx.cwd)
     
     # Check file exists (with retry for race condition)
     for attempt in range(3):

@@ -148,12 +148,12 @@ async def execute_task(task: Task):
                         logger.error(f"Task {task.id}: failed to send message: {resp.status}")
         
         elif task.task_type == "agent":
-            # Run agent with the task content
+            # Run agent with the task content as direct prompt
             async with aiohttp.ClientSession() as session:
                 payload = {
                     "user_id": task.user_id,
                     "chat_id": task.chat_id,
-                    "message": f"⏰ Scheduled task: {task.content}",
+                    "message": task.content,  # Direct prompt, no prefix
                     "username": "scheduler",
                     "source": task.source,
                     "chat_type": "private"

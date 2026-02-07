@@ -71,11 +71,9 @@ What the agent can do out of the box:
 
 ---
 
-## MCP Support (Planned)
+## MCP Support
 
-> 🚧 **Coming soon** — Model Context Protocol integration
-
-LocalTopSH will support MCP for extensible tool integration:
+LocalTopSH supports MCP (Model Context Protocol) for extensible tool integration:
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -83,25 +81,77 @@ LocalTopSH will support MCP for extensible tool integration:
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
 │   ┌─────────┐     ┌─────────────┐     ┌─────────────────────┐  │
-│   │  Agent  │────▶│  MCP Host   │────▶│  MCP Servers        │  │
-│   └─────────┘     └─────────────┘     ├─────────────────────┤  │
-│                                       │ • filesystem        │  │
-│                                       │ • git               │  │
-│                                       │ • database          │  │
-│                                       │ • browser           │  │
-│                                       │ • custom tools...   │  │
-│                                       └─────────────────────┘  │
+│   │  Agent  │────▶│  Tools API  │────▶│  MCP Servers        │  │
+│   └─────────┘     │  (registry) │     ├─────────────────────┤  │
+│                   └─────────────┘     │ • filesystem        │  │
+│                         │             │ • git               │  │
+│                         ▼             │ • database          │  │
+│                   ┌───────────┐       │ • browser           │  │
+│                   │ Builtin   │       │ • custom tools...   │  │
+│                   │ Tools (14)│       └─────────────────────┘  │
+│                   └───────────┘                                 │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### Planned MCP Features
+### MCP Features
 
-- [ ] MCP server discovery and connection
-- [ ] Dynamic tool registration from MCP servers
+- [x] MCP server registry (`/mcp/servers`)
+- [x] Dynamic tool loading from MCP servers
+- [x] Tool search (`search_tools` tool)
+- [x] Per-server tool refresh
 - [ ] Resource access (files, databases)
 - [ ] Prompt templates from MCP
-- [ ] Custom MCP server development guide
+
+### Adding MCP Server
+
+```bash
+# Via API
+curl -X POST http://localhost:8100/mcp/servers \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "filesystem",
+    "url": "http://mcp-filesystem:3001",
+    "transport": "http",
+    "description": "File system operations"
+  }'
+
+# Refresh tools from server
+curl -X POST http://localhost:8100/mcp/servers/filesystem/refresh
+
+# List all tools (builtin + MCP)
+curl http://localhost:8100/tools
+```
+
+### MCP Config File
+
+Tools API stores MCP config in `/data/mcp_servers.json`:
+
+```json
+{
+  "filesystem": {
+    "name": "filesystem",
+    "url": "http://mcp-filesystem:3001",
+    "enabled": true,
+    "transport": "http",
+    "description": "File system operations"
+  },
+  "github": {
+    "name": "github",
+    "url": "http://mcp-github:3002",
+    "enabled": true,
+    "transport": "http",
+    "api_key": "ghp_xxx"
+  }
+}
+```
+
+### Tool Naming
+
+MCP tools are prefixed with `mcp_{server}_{tool}`:
+- `mcp_filesystem_read_file`
+- `mcp_github_create_issue`
+- `mcp_database_query`
 
 ---
 

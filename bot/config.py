@@ -21,9 +21,9 @@ def read_secret(name: str, env_key: str) -> str:
 
 # Secrets & Environment
 TELEGRAM_TOKEN = read_secret("telegram_token", "TELEGRAM_TOKEN")
+MODEL = read_secret("model_name", "MODEL_NAME") or "gpt-4"
 CORE_URL = os.getenv("CORE_URL", "http://core:4000")
 PROXY_URL = os.getenv("PROXY_URL", "http://proxy:3200")
-MODEL = os.getenv("MODEL_NAME", "openai/gpt-oss-120b")
 BOT_PORT = int(os.getenv("BOT_PORT", "4001"))
 MAX_CONCURRENT = int(os.getenv("MAX_CONCURRENT_USERS", "10"))
 ADMIN_USER_ID = int(os.getenv("ADMIN_USER_ID", "0"))

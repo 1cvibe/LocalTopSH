@@ -10,6 +10,22 @@ from pydantic import BaseModel
 from typing import Optional
 import docker
 
+
+def _read_model_name() -> str:
+    """Read model name from Docker secret or env"""
+    paths = ["/run/secrets/model_name", "/run/secrets/model_name.txt"]
+    for path in paths:
+        if os.path.exists(path):
+            try:
+                with open(path) as f:
+                    value = f.read().strip()
+                    if value:
+                        return value
+            except:
+                pass
+    return os.getenv("MODEL_NAME", "gpt-4")
+
+
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 # Docker client
@@ -220,7 +236,7 @@ def load_config():
     """Load config from file"""
     default = {
         "agent": {
-            "model": os.getenv("MODEL_NAME", "openai/gpt-oss-120b"),
+            "model": _read_model_name(),
             "max_iterations": 30,
             "max_history": 10,
             "tool_timeout": 120

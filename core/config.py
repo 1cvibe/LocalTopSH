@@ -4,13 +4,28 @@ import os
 from dataclasses import dataclass
 
 
+def read_secret(name: str, default: str = "") -> str:
+    """Read secret from Docker Secrets or env"""
+    paths = [f"/run/secrets/{name}", f"/run/secrets/{name}.txt"]
+    for path in paths:
+        if os.path.exists(path):
+            try:
+                with open(path) as f:
+                    value = f.read().strip()
+                    if value:
+                        return value
+            except:
+                pass
+    return default
+
+
 @dataclass
 class Config:
     """Central configuration"""
     # API
     api_port: int = 4000
     proxy_url: str = ""
-    model: str = "openai/gpt-oss-120b"
+    model: str = "gpt-4"
     
     # Agent
     max_iterations: int = 30
@@ -41,7 +56,7 @@ class Config:
 CONFIG = Config(
     api_port=int(os.getenv("API_PORT", "4000")),
     proxy_url=os.getenv("PROXY_URL", ""),
-    model=os.getenv("MODEL_NAME", "openai/gpt-oss-120b"),
+    model=read_secret("model_name", os.getenv("MODEL_NAME", "gpt-4")),
     workspace=os.getenv("WORKSPACE", "/workspace"),
     bot_url=os.getenv("BOT_URL", "http://bot:4001"),
     userbot_url=os.getenv("USERBOT_URL", "http://userbot:8080"),

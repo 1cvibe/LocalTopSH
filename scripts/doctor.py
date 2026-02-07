@@ -110,14 +110,17 @@ Checking 5 layers of protection:
                 self.check(f"secret_{secret}", False, f"{secret} missing",
                           "critical", f"echo 'your-value' > secrets/{secret}")
         
-        # Check file permissions (should be 600)
+        # Check file permissions (644 for Docker Compose, 600 for Swarm)
+        # Note: Docker Compose file-based secrets need 644 to be readable in containers
         for f in secrets_dir.glob("*.txt"):
             mode = f.stat().st_mode
-            is_secure = (mode & 0o077) == 0  # No group/other permissions
+            mode_oct = mode & 0o777
+            # Accept 600 (secure) or 644 (Docker Compose compatible)
+            is_secure = mode_oct in (0o600, 0o644)
             self.check(f"perm_{f.name}", is_secure,
-                      f"{f.name} permissions: {oct(mode & 0o777)}",
+                      f"{f.name} permissions: {oct(mode_oct)}",
                       "high" if not is_secure else "low",
-                      f"chmod 600 secrets/{f.name}")
+                      f"chmod 644 secrets/{f.name}  # For Docker Compose")
         
         # Check .gitignore
         gitignore = self.root / ".gitignore"

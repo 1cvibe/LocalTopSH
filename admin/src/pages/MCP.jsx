@@ -135,7 +135,7 @@ function MCP() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ flex: 1 }}>
                   <h3 style={{ fontSize: '16px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <label className="toggle" title={server.enabled !== false ? 'Disable server' : 'Enable server'}>
+                    <label className="toggle-switch" title={server.enabled !== false ? 'Disable server' : 'Enable server'} style={{ flexShrink: 0 }}>
                       <input 
                         type="checkbox" 
                         checked={server.enabled !== false}
@@ -144,9 +144,13 @@ function MCP() {
                       <span className="toggle-slider"></span>
                     </label>
                     <span style={{ 
+                      display: 'inline-block',
                       width: '10px', 
                       height: '10px', 
+                      minWidth: '10px',
+                      minHeight: '10px',
                       borderRadius: '50%', 
+                      flexShrink: 0,
                       background: server.enabled === false ? 'var(--text-dim)' : (server.status?.connected ? 'var(--success)' : 'var(--error)')
                     }}></span>
                     {server.name}

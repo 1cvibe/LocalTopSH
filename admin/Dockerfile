@@ -9,8 +9,8 @@ RUN npm run build
 # Production stage - serve with nginx
 FROM nginx:alpine
 
-# Install apache2-utils for htpasswd
-RUN apk add --no-cache apache2-utils
+# Install apache2-utils for htpasswd and curl for healthcheck
+RUN apk add --no-cache apache2-utils curl
 
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf

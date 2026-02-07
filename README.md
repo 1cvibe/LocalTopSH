@@ -246,6 +246,7 @@ mkdir secrets
 echo "your-telegram-token" > secrets/telegram_token.txt
 echo "http://your-llm:8000/v1" > secrets/base_url.txt
 echo "your-llm-key" > secrets/api_key.txt
+echo "gpt-4" > secrets/model_name.txt
 echo "your-zai-key" > secrets/zai_api_key.txt
 
 # 2. Start
@@ -338,8 +339,9 @@ LocalTopSH/
 | Secret | Required | Description |
 |--------|----------|-------------|
 | `telegram_token.txt` | ✅ | Bot token from @BotFather |
-| `base_url.txt` | ✅ | LLM API URL |
+| `base_url.txt` | ✅ | LLM API URL (e.g. `http://your-llm:8000/v1`) |
 | `api_key.txt` | ✅ | LLM API key |
+| `model_name.txt` | ✅ | Model name (e.g. `gpt-4`, `gpt-oss-120b`) |
 | `zai_api_key.txt` | ✅ | Z.AI search key |
 | `telegram_api_id.txt` | Userbot | Telegram API ID |
 | `telegram_api_hash.txt` | Userbot | Telegram API Hash |

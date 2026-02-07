@@ -58,7 +58,6 @@ services:
     environment:
       - PROXY_URL=http://proxy:3200
       - TOOLS_API_URL=http://tools-api:8100
-      - MODEL_NAME=openai/gpt-oss-120b
       - WORKSPACE=/workspace
       - WORKSPACE_HOST_PATH=${PWD}/workspace
       - EXPOSED_PORTS=5000-5099
@@ -68,6 +67,7 @@ services:
       - USERBOT_URL=http://userbot:8080
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     secrets:
+      - model_name
       - gdrive_client_id
       - gdrive_client_secret
     volumes:
@@ -113,7 +113,6 @@ services:
     environment:
       - CORE_URL=http://core:4000
       - PROXY_URL=http://proxy:3200
-      - MODEL_NAME=openai/gpt-oss-120b
       - BOT_PORT=4001
       - MAX_CONCURRENT_USERS=10
       - ADMIN_USER_ID=${ADMIN_USER_ID:-809532582}
@@ -122,6 +121,7 @@ services:
       - ALLOWED_USERS=${ALLOWED_USERS:-}
     secrets:
       - telegram_token
+      - model_name
     volumes:
       - ./workspace/_shared:/data  # For pairing.json storage
     networks:
@@ -210,6 +210,8 @@ secrets:
     file: ./secrets/telegram_api_hash.txt
   telegram_phone:
     file: ./secrets/telegram_phone.txt
+  model_name:
+    file: ./secrets/model_name.txt
 
 networks:
   agent-net:

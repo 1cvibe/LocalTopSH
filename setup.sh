@@ -57,6 +57,18 @@ if [ ! -f secrets/telegram_phone.txt ]; then
   echo "📝 Created empty secrets/telegram_phone.txt (Userbot optional)"
 fi
 
+# Admin panel password
+if [ ! -f secrets/admin_password.txt ]; then
+  echo "changeme123" > secrets/admin_password.txt
+  echo "⚠️  Created secrets/admin_password.txt with default password - CHANGE IT!"
+fi
+
+# Model name (optional - defaults to gpt-4.1-mini in core)
+if [ ! -f secrets/model_name.txt ]; then
+  touch secrets/model_name.txt
+  echo "📝 Created empty secrets/model_name.txt (uses default model)"
+fi
+
 # Set permissions
 chmod 600 secrets/*.txt
 
@@ -66,5 +78,6 @@ echo ""
 echo "Next steps:"
 echo "1. Edit secrets/telegram_token.txt with your bot token"
 echo "2. Edit secrets/api_key.txt with your LLM API key"
-echo "3. (Optional) Add Google Drive credentials for Drive integration"
-echo "4. Run: docker compose up -d"
+echo "3. Change secrets/admin_password.txt from default 'changeme123'"
+echo "4. (Optional) Add Google Drive credentials for Drive integration"
+echo "5. Run: docker compose up -d"

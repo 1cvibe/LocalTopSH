@@ -41,21 +41,21 @@ def get_secret(name, prompt):
 async def main():
     """Main authorization flow with proper async context"""
     from telethon.errors import FloodWaitError
-    
-    print("=" * 50)
-    print("Telegram Userbot Authorization")
-    print("=" * 50)
-    print()
-    
-    api_id = get_secret('telegram_api_id', 'API ID')
-    api_hash = get_secret('telegram_api_hash', 'API Hash')
-    phone = get_secret('telegram_phone', 'Phone (with country code, e.g. +79001234567)')
-    
-    print()
-    print(f"API ID: {api_id}")
-    print(f"Phone: {phone}")
-    print()
-    
+
+print("=" * 50)
+print("Telegram Userbot Authorization")
+print("=" * 50)
+print()
+
+api_id = get_secret('telegram_api_id', 'API ID')
+api_hash = get_secret('telegram_api_hash', 'API Hash')
+phone = get_secret('telegram_phone', 'Phone (with country code, e.g. +79001234567)')
+
+print()
+print(f"API ID: {api_id}")
+print(f"Phone: {phone}")
+print()
+
     # Create session directory in the correct location (userbot/session/)
     session_dir = SCRIPT_DIR / 'session'
     session_dir.mkdir(exist_ok=True)
@@ -63,7 +63,7 @@ async def main():
     
     print(f"Session will be saved to: {session_path}.session")
     print()
-    
+
     # Create client INSIDE async context (fixes Python 3.14 issue)
     client = TelegramClient(str(session_path), int(api_id), api_hash)
     
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     # Python 3.10+ compatible way to run async main
     # Works on Python 3.14 where asyncio.run() requires explicit loop policy
     try:
-        asyncio.run(main())
+asyncio.run(main())
     except RuntimeError as e:
         if "no current event loop" in str(e).lower():
             # Fallback for Python 3.14+ on some systems

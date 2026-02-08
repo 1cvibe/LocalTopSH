@@ -640,7 +640,7 @@ async def run_agent(
                     args = try_fix_json_args(raw_args, name)
                     if args is None:
                         agent_logger.error(f"[iter {iteration}] Could not fix JSON args for {name}")
-                        args = {}
+                    args = {}
                 
                 # Execute tool
                 tool_result = await execute_tool(name, args, tool_ctx)

@@ -244,6 +244,7 @@ def load_config():
     default = {
         "agent": {
             "model": _read_model_name(),
+            "temperature": 0.7,
             "max_iterations": 30,
             "max_history": 10,
             "tool_timeout": 120
@@ -279,7 +280,15 @@ def load_config():
     if os.path.exists(CONFIG_FILE):
         try:
             with open(CONFIG_FILE) as f:
-                return {**default, **json.load(f)}
+                saved = json.load(f)
+                # Deep merge - add new default keys to saved config
+                result = {}
+                for section, values in default.items():
+                    if isinstance(values, dict):
+                        result[section] = {**values, **saved.get(section, {})}
+                    else:
+                        result[section] = saved.get(section, values)
+                return result
         except:
             pass
     return default

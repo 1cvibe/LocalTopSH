@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from typing import Optional
 from pathlib import Path
 
-from config import CONFIG
+from config import CONFIG, get_model, get_temperature, get_max_iterations
 from logger import agent_logger, log_agent_step
 from tools import execute_tool, filter_tools_for_session
 from models import ToolContext
@@ -244,7 +244,7 @@ def save_session_to_file(session: Session):
 
 def is_mlx_model() -> bool:
     """Check if using MLX backend (doesn't support tool calling)"""
-    model = CONFIG.model.lower() if CONFIG.model else ""
+    model = get_model().lower()
     # MLX models typically have mlx in name or are local models
     return "mlx" in model or model.startswith("local/")
 
@@ -280,10 +280,15 @@ async def call_llm(messages: list, tools: list) -> dict:
     # MLX doesn't support tool calling - use prompt-based approach
     use_tools = not is_mlx_model() and tools
     
+    # Get model and temperature from admin config (dynamic)
+    current_model = get_model()
+    current_temp = get_temperature()
+    
     request_body = {
-        "model": CONFIG.model,
+        "model": current_model,
         "messages": messages,
         "max_tokens": 8000,
+        "temperature": current_temp,
     }
     
     if use_tools:
@@ -570,10 +575,11 @@ async def run_agent(
     
     agent_logger.info(f"Available tools for {chat_type}/{source}: {len(tool_definitions)} (lazy={use_lazy_loading})")
     
-    while iteration < CONFIG.max_iterations:
+    max_iter = get_max_iterations()
+    while iteration < max_iter:
         iteration += 1
         ctx_chars = sum(len(json.dumps(m)) for m in messages)
-        log_agent_step(iteration, CONFIG.max_iterations, len(messages), ctx_chars)
+        log_agent_step(iteration, max_iter, len(messages), ctx_chars)
         
         # Call LLM
         result = await call_llm(messages, tool_definitions)

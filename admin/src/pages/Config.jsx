@@ -424,7 +424,28 @@ function Config() {
                 className="form-input"
                 value={config.agent?.model || ''}
                 onChange={e => updateValue('agent', 'model', e.target.value)}
+                placeholder="e.g. gpt-4, claude-3-opus, deepseek-chat"
               />
+              <p style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>
+                Model name for the proxy. Changes apply immediately.
+              </p>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Temperature</label>
+              <div className="range-container">
+                <input 
+                  type="range"
+                  className="range-input"
+                  min="0"
+                  max="100"
+                  value={(config.agent?.temperature ?? 0.7) * 100}
+                  onChange={e => updateValue('agent', 'temperature', parseInt(e.target.value) / 100)}
+                />
+                <span className="range-value">{(config.agent?.temperature ?? 0.7).toFixed(2)}</span>
+              </div>
+              <p style={{ color: '#888', fontSize: '12px', marginTop: '4px' }}>
+                0 = deterministic, 1 = creative. Default: 0.7
+              </p>
             </div>
             <div className="form-group">
               <label className="form-label">Max Iterations</label>

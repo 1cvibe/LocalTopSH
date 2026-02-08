@@ -644,11 +644,23 @@ async def run_agent(
                 # Handle dynamic tool loading - MCP tools are called directly, no need to load
                 # The execute_tool function handles mcp_* tools automatically
                 
-                # Track blocked commands
-                if not tool_result.success and "BLOCKED" in (tool_result.error or ""):
+                # Track SECURITY violations only (not privilege/capability limits)
+                # Categories that are actual security threats vs just sandbox limitations
+                error_msg = tool_result.error or ""
+                is_security_violation = (
+                    "BLOCKED" in error_msg and 
+                    any(threat in error_msg.lower() for threat in [
+                        "secret", "env", "token", "key", "password", "credential",
+                        "injection", "/etc/passwd", "/etc/shadow", "proc/self",
+                        "base64", "exfiltration", "fork bomb", "rm -rf"
+                    ])
+                )
+                
+                if is_security_violation:
                     session.blocked_count += 1
+                    agent_logger.warning(f"Security violation detected: {error_msg[:100]}")
                     if session.blocked_count >= CONFIG.max_blocked_commands:
-                        agent_logger.warning(f"Too many blocked commands: {session.blocked_count}")
+                        agent_logger.warning(f"Too many security violations: {session.blocked_count}")
                         return "🚫 Session locked due to repeated security violations. /clear to reset."
                 
                 # Add tool result
